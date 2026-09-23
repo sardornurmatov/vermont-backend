@@ -17,21 +17,28 @@ import java.util.List;
 @Configuration @EnableMethodSecurity
 public class SecurityConfig {
   @Bean PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(12); }
+
   @Bean CorsConfigurationSource corsConfigurationSource(@Value("${app.frontend-origin}") String origin) {
     CorsConfiguration config = new CorsConfiguration();
     config.setAllowedOrigins(List.of(origin));
-    config.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
-    config.setAllowedHeaders(List.of("Authorization","Content-Type"));
+    config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+    config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", config);
     return source;
   }
+
   @Bean SecurityFilterChain filterChain(HttpSecurity http, JwtAuthFilter filter) throws Exception {
-    return http.csrf(csrf -> csrf.disable()).cors(cors -> {}).sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+    return http
+      .csrf(csrf -> csrf.disable())
+      .cors(cors -> {})
+      .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
       .authorizeHttpRequests(auth -> auth
-        .requestMatchers("/", "/error", "/api/customers/register", "/api/customers/login", "/api/auth/admin/login").permitAll()
+        .requestMatchers("/", "/error", "/api/health", "/api/customers/register", "/api/customers/login", "/api/auth/admin/login").permitAll()
         .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/payment-info/**").permitAll()
-        .requestMatchers("/api/**").authenticated().anyRequest().permitAll())
-      .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class).build();
+        .requestMatchers("/api/**").authenticated()
+        .anyRequest().permitAll())
+      .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
+      .build();
   }
 }
